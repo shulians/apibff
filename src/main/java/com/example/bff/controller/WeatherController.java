@@ -2,6 +2,7 @@ package com.example.bff.controller;
 
 import com.example.bff.dto.WeatherRqDTO;
 import com.example.bff.dto.WeatherRsDTO;
+import com.example.bff.exception.TechnicalException;
 import com.example.bff.service.IWeatherService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +19,7 @@ public class WeatherController {
     }
 
     @PostMapping
-    public ResponseEntity<WeatherRsDTO> getCurrentConditionByLocationKey(@RequestBody WeatherRqDTO rq) {
+    public ResponseEntity<WeatherRsDTO> getCurrentConditionByLocationKey(@RequestBody WeatherRqDTO rq) throws TechnicalException {
         return ResponseEntity.ok(service.getWeatherByKey(rq));
     }
 }
