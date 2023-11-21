@@ -4,7 +4,6 @@ import com.example.bff.dto.ErrorDTO;
 import com.example.bff.dto.ResponseDTO;
 import com.example.bff.exception.BusinessException;
 import com.example.bff.exception.TechnicalException;
-import io.micrometer.common.lang.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -14,7 +13,7 @@ import org.springframework.web.context.request.WebRequest;
 @ControllerAdvice
 public class ControllerExceptionHandler {
     @ExceptionHandler({ TechnicalException.class })
-    @Nullable
+
     public ResponseEntity<ResponseDTO> handlerTechnicalException(final TechnicalException exception,
                                                                  final WebRequest request) {
 
@@ -24,7 +23,7 @@ public class ControllerExceptionHandler {
     }
 
     @ExceptionHandler({ BusinessException.class, })
-    @Nullable
+
     public ResponseEntity<ResponseDTO> handlerBusinessException(final BusinessException exception,
                                                                 final WebRequest request) {
 

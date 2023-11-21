@@ -9,7 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class WeatherRqDTO {
-    String key;
-    CoordinatesDTO coordinates;
+public class LocationDTO {
+    String localizedName;
+    String country;
+    String city;
 }

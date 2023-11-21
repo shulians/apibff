@@ -1,6 +1,7 @@
 package com.example.bff.dto;
 
-import com.example.bff.feing.rest.results.Result;
+import com.example.bff.feing.rest.proxy.Location;
+import com.example.bff.feing.rest.proxy.WeatherRes;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,11 +20,18 @@ public class WeatherRsDTO {
     String DateTime;
     String weatherInMetric;
     String weatherInImperial;
+    String weatherText;
+    Boolean isDayTime;
 
-    public static WeatherRsDTO convert (Result toConvert){
+    public static WeatherRsDTO convert (Location location, WeatherRes weatherRes){
         ModelMapper modelMapper = new ModelMapper();
+        WeatherRsDTO dto = modelMapper.map(location, WeatherRsDTO.class);
 
-        WeatherRsDTO dto = modelMapper.map(toConvert,WeatherRsDTO.class);
+        dto.setWeatherInMetric(weatherRes.getTemperature().getMetric().weather());
+        dto.setWeatherInImperial(weatherRes.getTemperature().getImperial().weather());
+        dto.setDateTime(weatherRes.getLocalObservationDateTime());
+        dto.setWeatherText(weatherRes.getWeatherText());
+        dto.setIsDayTime(weatherRes.getIsDayTime());
 
         return dto;
     }

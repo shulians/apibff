@@ -1,56 +1,71 @@
 package com.example.bff.service.impl;
 
+import com.example.bff.dto.WeatherCurrentResDTO;
+import com.example.bff.dto.WeatherHistoryResDTO;
 import com.example.bff.dto.WeatherRqDTO;
 import com.example.bff.dto.WeatherRsDTO;
 import com.example.bff.exception.TechnicalException;
-import com.example.bff.feing.client.proxy.ProxyClient;
-import com.example.bff.feing.client.results.ResultsClient;
-import com.example.bff.feing.rest.proxy.CurrentConditions;
+import com.example.bff.feing.client.wheater.WeatherClient;
 import com.example.bff.feing.rest.proxy.Location;
-import com.example.bff.feing.rest.results.Result;
+import com.example.bff.feing.rest.proxy.WeatherRes;
+import com.example.bff.feing.rest.proxy.WeatherRq;
+import com.example.bff.feing.rest.proxy.WeathersRes;
 import com.example.bff.service.IWeatherService;
 import com.example.bff.util.ErrorDescriptionUtil;
+import com.example.bff.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 public class WeatherServiceImpl implements IWeatherService {
-    ProxyClient proxyClient;
-    ResultsClient resultsClient;
+    WeatherClient weatherClient;
 
     @Autowired
-    public WeatherServiceImpl(ProxyClient proxyClient, ResultsClient resultsClient) {
-        this.proxyClient = proxyClient;
-        this.resultsClient = resultsClient;
+    public WeatherServiceImpl(WeatherClient weatherClient) {
+        this.weatherClient = weatherClient;
     }
 
     @Override
-    public WeatherRsDTO getWeatherByKey(WeatherRqDTO rq) throws TechnicalException {
+    public WeatherRsDTO getWeatherByRQ(WeatherRqDTO rq) throws TechnicalException {
         WeatherRsDTO response;
+
+
         try {
-            Location location = proxyClient.getLocationByKey(rq.getKey());
-            CurrentConditions conditions = proxyClient.getCurrentConditionByLocationKey(location.getKey());
+            if(StringUtils.isNullOrIsEmpty(rq.getKey()) && !rq.getCoordinates().isNullOrIsEmpty()){
+                rq.setKey(weatherClient.getLocationByGeo(rq.getCoordinates().get()).getKey());
+            }
 
-            String key = location.getKey();
-            String localizedName = location.getLocalizedName();
-            String country = location.getCountry();
-            String city = location.getCity();
-            String dateTime = conditions.getLocalObservationDateTime();
-            String weatherInMetric = conditions.getTemperature().getMetric().weather();
-            String weatherInImperial = conditions.getTemperature().getImperial().weather();
+            Location location = weatherClient.getLocationByKey(rq.getKey());
+            WeatherRq weatherRq = WeatherRq.builder().location(location).build();
 
-            Result rs = Result.builder()
-                    .key(key)
-                    .localizedName(localizedName)
-                    .country(country)
-                    .city(city)
-                    .dateTime(dateTime)
-                    .weatherInMetric(weatherInMetric)
-                    .weatherInImperial(weatherInImperial).build();
+            WeatherRes weatherRes = weatherClient.getByWeatherRq(weatherRq);
 
-            resultsClient.create(rs);
+            response = WeatherRsDTO.convert(location, weatherRes);
 
-            response = WeatherRsDTO.convert(rs);
+        }catch (Exception e){
+            throw new TechnicalException(ErrorDescriptionUtil.E_GENERAL_EXCEPTION_CODE,
+                    ErrorDescriptionUtil.E_GENERAL_EXCEPTION);
+        }
+
+        return response;
+    }
+
+    @Override
+    public WeatherHistoryResDTO getWeathers() throws TechnicalException {
+        WeatherHistoryResDTO response = WeatherHistoryResDTO.builder().build();
+
+        try {
+            WeathersRes weathersRes = weatherClient.getWeathers();
+
+            if(weathersRes != null && !weathersRes.getWeathers().isEmpty()){
+                List<WeatherCurrentResDTO> list = new ArrayList<>();
+                weathersRes.getWeathers().forEach(item -> list.add(WeatherCurrentResDTO.convert(item)));
+
+                response.setWeathers(list);
+            }
 
         }catch (Exception e){
             throw new TechnicalException(ErrorDescriptionUtil.E_GENERAL_EXCEPTION_CODE,
